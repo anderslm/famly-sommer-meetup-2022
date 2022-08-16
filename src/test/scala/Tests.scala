@@ -27,7 +27,7 @@ class GameOfLifeSpec extends AnyFlatSpec with should.Matchers {
   it should "start with a default pattern" in {
     val pattern = GameOfLife.start()
 
-    pattern.size should be(4)
+    pattern.size should be(5)
   }
 
   it should "start with a pattern" in {

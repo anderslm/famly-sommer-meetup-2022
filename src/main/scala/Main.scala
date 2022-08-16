@@ -1,5 +1,32 @@
 object Main extends App {
-  println("Hello, World!")
+  def printGame(pattern: List[Cell]) = {  
+    var y = pattern.sortBy(_.y).head.y
+    var x = pattern.sortBy(_.x).head.x
+
+    pattern.groupBy(_.y).toSeq.sortBy(_._1).foreach { case (i, line) => 
+      val sorted = line.sortBy(_.x)
+      y to i-1 foreach { _ => println() }
+      sorted.foreach(cell =>  {
+        x to cell.x-1 foreach { _ => print(" ") }
+        print("#")
+        x = cell.x
+      })
+      y = i
+    }
+  }
+
+  def run(pattern: GameOfLife.Pattern): Unit = {
+    print("\u001b[2J")
+    printGame(pattern.toList)
+    
+    GameOfLife.tick(pattern) match {
+      case newPattern => 
+        Thread.sleep(1000)
+        run(newPattern)
+    }
+  }
+
+  run(GameOfLife.start())
 }
 
 case class Cell(x: Int, y: Int)
@@ -7,7 +34,10 @@ case class Cell(x: Int, y: Int)
 object GameOfLife {
   type Pattern = Set[Cell]
 
-  def start(pattern: Pattern = Set(Cell(0, 0), Cell(0, 1), Cell(0, 2), Cell(0, 3))) = pattern
+  val blinker = Set(Cell(20, 10), Cell(21, 10), Cell(22, 10))
+  val glider = Set(Cell(0, 3), Cell(1, 1), Cell(1, 2), Cell(2, 2), Cell(2, 3))
+
+  def start(pattern: Pattern = glider) = pattern
 
   def tick(pattern: Pattern) = 
     pattern.filter(cell => neighbours(pattern, cell) match {
