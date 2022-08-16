@@ -17,25 +17,100 @@
  * and the discrete moment at which this happens is sometimes called a tick. Each generation is a pure function of the preceding one. The rules continue to be applied repeatedly to create further generations.  
  */
 
+import scala.util.chaining._
 import collection.mutable.Stack
 import org.scalatest._
 import flatspec._
 import matchers._
 
-class ExampleSpec extends AnyFlatSpec with should.Matchers {
+class GameOfLifeSpec extends AnyFlatSpec with should.Matchers {
+  it should "start with a default pattern" in {
+    val pattern = GameOfLife.start()
 
-  "A Stack" should "pop values in last-in-first-out order" in {
-    val stack = new Stack[Int]
-    stack.push(1)
-    stack.push(2)
-    stack.pop() should be (2)
-    stack.pop() should be (1)
+    pattern.size should be(4)
   }
 
-  it should "throw NoSuchElementException if an empty stack is popped" in {
-    val emptyStack = new Stack[Int]
-    a [NoSuchElementException] should be thrownBy {
-      emptyStack.pop()
-    } 
+  it should "start with a pattern" in {
+    val pattern = Set(Cell(1, 2))
+
+    GameOfLife.start(pattern) should be(pattern)
+  }
+
+  "a cell" should "have coordinates" in {
+    val cell = GameOfLife.start().head
+
+    cell.x shouldBe a[Int]
+  }
+
+  "a cell with no neighbours" should "die by underpopulation" in {
+    val pattern = Set(Cell(1, 2))
+
+    pattern
+      .pipe(GameOfLife.start)
+      .pipe(GameOfLife.tick) shouldBe empty
+  }
+
+  "a cell with 1 neighbour" should "die by underpopulation" in {
+    val pattern = Set(Cell(1, 2), Cell(1, 3))
+
+    pattern
+      .pipe(GameOfLife.start)
+      .pipe(GameOfLife.tick) shouldBe empty
+  }
+
+  "a cell with 2 neighbours" should "survive to the next generation" in {
+    val pattern = Set(Cell(2, 1), Cell(2, 2), Cell(2, 3))
+
+    pattern
+      .pipe(GameOfLife.start)
+      .pipe(GameOfLife.tick) should contain(Cell(2, 2))
+  }
+
+  "a cell with 2 adjacent neighbours" should "survive to the next generation" in {
+    val pattern = Set(Cell(1, 1), Cell(2, 2), Cell(3, 3))
+
+    pattern
+      .pipe(GameOfLife.start)
+      .pipe(GameOfLife.tick) should contain(Cell(2, 2))
+  }
+
+  "a cell with 2 adjacent neighbours alternative" should "survive to the next generation" in {
+    val pattern = Set(Cell(1, 3), Cell(2, 2), Cell(3, 1))
+
+    pattern
+      .pipe(GameOfLife.start)
+      .pipe(GameOfLife.tick) should contain(Cell(2, 2))
+  }
+
+  "a cell with 3 neighbours" should "survive to the next generation" in {
+    val pattern = Set(Cell(1, 1), Cell(1, 2), Cell(1, 3), Cell(2, 2))
+
+    pattern
+      .pipe(GameOfLife.start)
+      .pipe(GameOfLife.tick) should contain(Cell(1, 2))
+  }
+
+  "a cell with 4 neighbours" should "die by overpopulation" in {
+    val pattern = Set(Cell(0, 2), Cell(1, 1), Cell(1, 2), Cell(1, 3), Cell(2, 2))
+
+    pattern
+      .pipe(GameOfLife.start)
+      .pipe(GameOfLife.tick) should not contain(Cell(1, 2))
+  }
+
+  "a cell with 4 adjacent neighbours" should "die by overpopulation" in {
+    val pattern = Set(Cell(1, 1), Cell(1, 3), Cell(2, 2), Cell(3, 3), Cell(3, 1))
+
+    pattern
+      .pipe(GameOfLife.start)
+      .pipe(GameOfLife.tick) should not contain(Cell(2, 2))
+  }
+
+  "a dead cell with 3  neighbours" should "spawn as by reproduction" in {
+    val pattern = Set(Cell(1, 1), Cell(1, 3), Cell(3, 3))
+
+    pattern
+      .pipe(GameOfLife.start)
+      .pipe(GameOfLife.tick) should contain(Cell(2, 2))
   }
 }
